@@ -8,30 +8,64 @@
 
 ;;; Starting Out
 ;;;
-;;; - Defining a choreography (roles, choreographic type, params)
+;;; - Defining a choreography
 ;;; - Concurrency model
 ;;; - Simulator
 ;;; - Communication basics
+;;; - Macroexpansion
 
-(defchor simple-1 [A B] (-> B) []
+(defchor simple-print [A B] (-> B) []
   (A (println "Hello!"))
   (B 123))
 
-(defchor simple-2 [A B] (-> A B) [x]
+(comment
+  @(simulate-chor simple-print)
+  )
+
+;;; ---
+
+(defchor simple-move [A B] (-> A B) [x]
   (A->B x))
+
+(comment
+  @(simulate-chor simple-move 42)
+  )
+
+;;; ---
 
 (defchor remote-invoke [A B] (-> B A A) [f x]
   (B->A (f (A->B x))))
 
+(comment
+  @(simulate-chor remote-invoke inc 42)
+  )
+
+;;; ---
+
 (defchor remote-apply [A B] (-> B A A) [f xs]
   (B->A (B (apply f (A->B xs)))))
+
+(comment
+  @(simulate-chor remote-apply + [1 2 3])
+  )
+
+;;; ---
+
+(defchor rpc [A B] (-> A A A) [name xs]
+  (let [var (B (resolve (A->B name)))]
+    (remote-apply [A B] (B @var) xs)))
+
+(comment
+  @(simulate-chor rpc '+ [1 2 3])
+  )
 
 ;;; Sharing Knowledge
 ;;;
 ;;; - Agreement types
 ;;; - Conditionals and knowledge of choice
+;;; - Modularity, live redefinition
 
-(defchor simple-3 [A B] (-> A #{A B}) [x]
+(defchor simple-copy [A B] (-> A #{A B}) [x]
   (A=>B x))
 
 (defchor remote-map [A B] (-> B A A) [f xs]
@@ -45,19 +79,57 @@
     (B (inc (A->B x)))
     (B (println "Nothing!"))))
 
-(defn read-creds [prompt]
+(defn ask [prompt]
   (print prompt)
-  {:password (str/trim (read-line))})
+  (flush)
+  (read-line))
 
 (defchor auth [C A] (-> C #{C A}) [get-creds]
   (or (A=>C (A (= (:password (C->A (get-creds))) "secret")))
-      (and (C=>A (C (rand-nth [true false])))
+      (and (C=>A (C (read-string (ask "Continue? "))))
            (auth [C A] get-creds))))
 
 (defchor get-token [C S A] (-> C C) [get-creds]
   (if (A=>S (auth [C A] get-creds))
     (S->C (S (random-uuid)))
     (C :error)))
+
+(comment
+  (def get-token-server
+    (future
+      (with-server [ssc1 :port 7889]
+        (with-server [ssc2 :port 7890]
+          (with-accept [ssc2 sc2]
+            (println "Got client" (str (.getRemoteAddress sc2)))
+            (loop []
+              (println "Listening on" (str (.getLocalAddress ssc1)))
+              (println "Listening on" (str (.getLocalAddress ssc2)))
+              (with-accept [ssc1 sc1]
+                (println "Got client" (str (.getRemoteAddress sc1)))
+                (play-role (wrap-sockets {:role 'S} {'C sc1 'A sc2} :log true)
+                           get-token))
+              (recur)))))))
+
+  (def get-token-authenticator
+    (future
+      (with-server [ssc :port 7891]
+        (with-client [sc2 :host "127.0.0.1" :port 7890]
+          (println "Connected to" (str (.getRemoteAddress sc2)))
+          (loop []
+            (println "Listening on" (str (.getLocalAddress ssc)))
+            (with-accept [ssc sc1]
+              (println "Got client" (str (.getRemoteAddress sc1)))
+              (play-role (wrap-sockets {:role 'A} {'C sc1 'S sc2} :log true)
+                         get-token))
+            (recur))))))
+
+  (with-client [sc1 :host "127.0.0.1" :port 7889]
+    (println "Connected to" (str (.getRemoteAddress sc1)))
+    (with-client [sc2 :host "127.0.0.1" :port 7891]
+      (println "Connected to" (str (.getRemoteAddress sc2)))
+      (play-role (wrap-sockets {:role 'C} {'S sc1 'A sc2} :log true)
+                 get-token #(hash-set :password (str/trim (ask "PW: "))))))
+  )
 
 ;;; Returning Multiple Values
 ;;;
@@ -70,6 +142,19 @@
 (defchor exchange-key-1 [A B] (-> #{A B} #{A B} A B [A B]) [g p sa sb]
   (pack (A (modpow (B->A (B (modpow g sb p))) sa p))
         (B (modpow (A->B (A (modpow g sa p))) sb p))))
+
+(comment
+  ;; Example from <https://en.wikipedia.org/wiki/Diffie%E2%80%93Hellman_key_exchange#Cryptographic_explanation>.
+  @(simulate-chor exchange-key-1 5 23 4 3)
+  )
+
+(defchor secure-1 [A B] (-> A B) [x]
+  (unpack [[k1 k2] (exchange-key-1 [A B] 5 23 (A 4) (B 3))]
+    (B (.xor k2 (A->B (A (.xor k1 (biginteger x))))))))
+
+(comment
+  @(simulate-chor secure-1 42)
+  )
 
 (defchor exchange-key-2 [A B] (-> #{A B} #{A B} A B #{A B}) [g p sa sb]
   (agree! (A (modpow (B->A (B (modpow g sb p))) sa p))
@@ -153,9 +238,7 @@
     winner
     (let [loc (A=>B (A (ttt-pick board)))
           board' (ttt-place board loc (get ttt-syms idx))]
-      (if board'
-        (ttt-play [B A] board' (- 1 idx))
-        (ttt-play [A B] board idx)))))
+      (ttt-play [B A] board' (- 1 idx)))))
 
 (comment
   @(simulate-chor ttt-play (ttt-board) 0)
