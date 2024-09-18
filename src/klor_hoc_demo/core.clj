@@ -52,6 +52,9 @@
   )
 
 ;;; RPC
+;;;
+;;; - Instantiating choreographies
+;;; - Escaping the simulator
 
 (defchor rpc [A B] (-> A A A) [name xs]
   (let [var (B (resolve (A->B name)))]
@@ -225,29 +228,30 @@
 (defchor chain [A B C] (-> (-> B C) (-> A B) A C) [g f x]
   (g (f x)))
 
-(defchor chain-test [A B C] (-> C) []
+(defchor chain-test [A B C] (-> A C) [x]
   (chain [A B C]
          (chor (-> B C) [x] (B->C (B (+ x 10))))
          (chor (-> A B) [x] (A->B (A (* x 10))))
-         (A 41)))
+         x))
 
 (comment
-  @(simulate-chor chain-test)
+  @(simulate-chor chain-test 41)
   )
 
 (defchor compose [A B C] (-> (-> B C) (-> A B) (-> A C | B)) [g f]
   (chor (-> A C) [x] (g (f x))))
 
-(defchor compose-test [A B C] (-> (-> A C | B)) []
-  (compose [A B C]
-           (chor (-> B C) [x] (B->C (B (+ x 10))))
-           (chor (-> A B) [x] (A->B (A (* x 10))))))
+(defchor compose-test [A B C] (-> A C) [x]
+  ((compose [A B C]
+            (chor (-> B C) [x] (B->C (B (+ x 10))))
+            (chor (-> A B) [x] (A->B (A (* x 10)))))
+   x))
 
 (comment
-  @(simulate-chor compose-test)
+  @(simulate-chor compose-test 41)
   )
 
-;;; Escaping the Simulator
+;;; Tic-Tac-Toe
 
 (def ttt-syms
   '[x o])
