@@ -8,6 +8,8 @@
 
 ;;; * Starting Out
 ;;;
+;;; <https://github.com/lovrosdu/klor-hoc-demo>
+;;;
 ;;; - Defining a choreography
 ;;; - Typed DSL
 ;;; - Location polymorphism
@@ -55,6 +57,7 @@
 ;;;
 ;;; - Instantiating choreographies
 ;;; - Escaping the simulator
+;;; - Serialization
 
 (defchor rpc [A B] (-> A A A) [name xs]
   (let [var (B (resolve (A->B name)))]
