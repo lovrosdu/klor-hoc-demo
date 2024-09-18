@@ -309,8 +309,11 @@
               (Long/parseLong (read-line)))]
     (if (zero? n) :quit [(quot (dec n) 3) (mod (dec n) 3)])))
 
+(defn ttt-show [board]
+  (println (str "\n" (ttt-fmt (ttt-index board)))))
+
 (defchor ttt-play [A B] (-> #{A B} #{A B} #{A B}) [board idx]
-  (A (println (str "\n" (ttt-fmt (ttt-index board)))))
+  (A (ttt-show board))
   (if-let [winner (ttt-winner board)]
     winner
     (let [loc (A=>B (A (ttt-pick board)))]
@@ -318,7 +321,8 @@
         :quit
         (let [board' (ttt-place board loc (get ttt-syms idx))]
           (if board'
-            (ttt-play [B A] board' (- 1 idx))
+            (do (A (ttt-show board'))
+                (ttt-play [B A] board' (- 1 idx)))
             (ttt-play [A B] board idx)))))))
 
 (defchor ttt-start [A B] (-> #{A B}) []
