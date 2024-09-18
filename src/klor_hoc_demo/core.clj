@@ -6,6 +6,9 @@
    [klor.simulator :refer [simulate-chor]]
    [klor.sockets :refer [with-server with-accept with-client wrap-sockets]]))
 
+(def ip
+  "127.0.0.1")
+
 ;;; * Starting Out
 ;;;
 ;;; <https://github.com/lovrosdu/klor-hoc-demo>
@@ -14,7 +17,8 @@
 ;;; - Typed DSL
 ;;; - Location polymorphism
 ;;; - Role expressions
-;;; - Concurrency model
+;;; - Projection
+;;; - Concurrent execution
 ;;; - Simulator
 
 (defchor simple-print [A B] (-> B) []
@@ -84,7 +88,7 @@
                        rpc))
           (recur)))))
 
-  (with-client [sc {:host "127.0.0.1" :port rpc-port}]
+  (with-client [sc {:host ip :port rpc-port}]
     (println "Connected to server" (str (.getRemoteAddress sc)))
     (play-role (wrap-sockets {:role 'A} {'B sc} :log true)
                rpc 'my+ [1 2 3]))
@@ -101,6 +105,7 @@
 
 (comment
   @(simulate-chor simple-copy 42)
+  @(simulate-chor simple-move 42)
   )
 
 (defchor maybe-inc [A B] (-> A B) [x]
@@ -158,7 +163,7 @@
 
   (def get-token-authenticator
     (future
-      (with-client [sc1 {:host "127.0.0.1" :port (get-token-ports :A->S)}]
+      (with-client [sc1 {:host ip :port (get-token-ports :A->S)}]
         (println "Connected to server" (str (.getRemoteAddress sc1)))
         (with-server [ssc {:port (get-token-ports :C->A)}]
           (loop []
@@ -169,8 +174,8 @@
                          get-token))
             (recur))))))
 
-  (with-client [sc1 {:host "127.0.0.1" :port (get-token-ports :C->S)}
-                sc2 {:host "127.0.0.1" :port (get-token-ports :C->A)}]
+  (with-client [sc1 {:host ip :port (get-token-ports :C->S)}
+                sc2 {:host ip :port (get-token-ports :C->A)}]
     (println "Connected to server" (str (.getRemoteAddress sc1)))
     (println "Connected to authenticator" (str (.getRemoteAddress sc2)))
     (play-role (wrap-sockets {:role 'C} {'S sc1 'A sc2} :log true)
@@ -217,7 +222,7 @@
                                 secure)))
           (recur)))))
 
-  (with-client [sc {:host "127.0.0.1" :port secure-port}]
+  (with-client [sc {:host ip :port secure-port}]
     (println "Connected to server" (str (.getRemoteAddress sc)))
     (play-role (wrap-sockets {:role 'A} {'B sc} :log true)
                secure (Long/parseLong (ask "Enter a number: "))))
@@ -332,7 +337,7 @@
             (play-role (wrap-sockets {:role 'A} {'B sc} :log true) ttt-start))
           (recur)))))
 
-  (with-client [sc {:host "127.0.0.1" :port ttt-port}]
+  (with-client [sc {:host ip :port ttt-port}]
     (println "Connected to" (str (.getRemoteAddress sc)))
     (play-role (wrap-sockets {:role 'B} {'A sc} :log true) ttt-start))
   )
