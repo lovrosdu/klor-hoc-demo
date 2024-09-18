@@ -67,10 +67,10 @@
   (let [var (B (resolve (A->B name)))]
     (remote-apply [A B] (B @var) xs)))
 
-(comment
-  (defn my+ [& args]
-    (apply + args))
+(defn my+ [& args]
+  (apply + args))
 
+(comment
   @(simulate-chor rpc 'my+ [1 2 3])
   )
 
@@ -234,19 +234,6 @@
 ;;; - Type inference
 ;;; - Avoid auxiliary roles, defer to the tutorial/reference
 
-(defchor chain [A B C] (-> (-> B C) (-> A B) A C) [g f x]
-  (g (f x)))
-
-(defchor chain-test [A B C] (-> A C) [x]
-  (chain [A B C]
-         (chor (-> B C) [x] (B->C (B (+ x 10))))
-         (chor (-> A B) [x] (A->B (A (* x 10))))
-         x))
-
-(comment
-  @(simulate-chor chain-test 41)
-  )
-
 (defchor compose [A B C] (-> (-> B C) (-> A B) (-> A C | B)) [g f]
   (chor (-> A C) [x] (g (f x))))
 
@@ -320,10 +307,8 @@
       (if (= loc :quit)
         :quit
         (let [board' (ttt-place board loc (get ttt-syms idx))]
-          (if board'
-            (do (A (ttt-show board'))
-                (ttt-play [B A] board' (- 1 idx)))
-            (ttt-play [A B] board idx)))))))
+          (A (ttt-show board'))
+          (ttt-play [B A] board' (- 1 idx)))))))
 
 (defchor ttt-start [A B] (-> #{A B}) []
   (ttt-play [A B] (ttt-board) 0))
