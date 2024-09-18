@@ -297,20 +297,21 @@
       (if (= sym ttt-none) (+ (* i 3) j 1) sym))))
 
 (defn ttt-pick [board]
-  (let [n (do (println (format "Pick a location [1-9]:"))
-              (Long/parseLong (read-line)))
-        loc [(quot (dec n) 3) (mod (dec n) 3)]]
-    (if (not= (get-in board loc) ttt-none)
-      (recur board)
-      loc)))
+  (let [n (do (println (format "Make a move [1-9] or quit [0]:"))
+              (Long/parseLong (read-line)))]
+    (if (zero? n) :quit [(quot (dec n) 3) (mod (dec n) 3)])))
 
 (defchor ttt-play [A B] (-> #{A B} #{A B} #{A B}) [board idx]
   (A (println (str "\n" (ttt-fmt (ttt-index board)))))
   (if-let [winner (ttt-winner board)]
     winner
-    (let [loc (A=>B (A (ttt-pick board)))
-          board' (ttt-place board loc (get ttt-syms idx))]
-      (ttt-play [B A] board' (- 1 idx)))))
+    (let [loc (A=>B (A (ttt-pick board)))]
+      (if (= loc :quit)
+        :quit
+        (let [board' (ttt-place board loc (get ttt-syms idx))]
+          (if board'
+            (ttt-play [B A] board' (- 1 idx))
+            (ttt-play [A B] board idx)))))))
 
 (defchor ttt-start [A B] (-> #{A B}) []
   (ttt-play [A B] (ttt-board) 0))
