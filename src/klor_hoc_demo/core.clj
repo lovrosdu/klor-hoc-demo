@@ -6,7 +6,7 @@
    [klor.simulator :refer [simulate-chor]]
    [klor.sockets :refer [with-server with-accept with-client wrap-sockets]]))
 
-;;; Starting Out
+;;; * Starting Out
 ;;;
 ;;; - Defining a choreography
 ;;; - Typed DSL
@@ -24,7 +24,7 @@
   @(simulate-chor simple-print)
   )
 
-;;; Communicating
+;;; * Communicating
 ;;;
 ;;; - Communication basics
 ;;; - Projection via macroexpansion
@@ -51,7 +51,7 @@
   @(simulate-chor remote-apply + [1 2 3])
   )
 
-;;; RPC
+;;; * RPC
 ;;;
 ;;; - Instantiating choreographies
 ;;; - Escaping the simulator
@@ -87,7 +87,7 @@
                rpc 'my+ [1 2 3]))
   )
 
-;;; Sharing Knowledge
+;;; * Sharing Knowledge
 ;;;
 ;;; - Agreement types
 ;;; - Conditionals and knowledge of choice
@@ -115,7 +115,7 @@
     (A (cons (remote-invoke [A B] f (first xs))
              (remote-map [A B] f (next xs))))))
 
-;;; Authentication
+;;; * Authentication
 
 (defn ask [prompt]
   (print prompt)
@@ -174,7 +174,7 @@
                get-token #(hash-map :password (str/trim (ask "PW: ")))))
   )
 
-;;; Returning Multiple Values
+;;; * Multiple Values
 ;;;
 ;;; - Choreographic tuples
 ;;; - Forced agreement
@@ -216,10 +216,11 @@
 
   (with-client [sc {:host "127.0.0.1" :port secure-port}]
     (println "Connected to server" (str (.getRemoteAddress sc)))
-    (play-role (wrap-sockets {:role 'A} {'B sc} :log true) secure 42))
+    (play-role (wrap-sockets {:role 'A} {'B sc} :log true)
+               secure (Long/parseLong (ask "Enter a number: "))))
   )
 
-;;; Higher-Order
+;;; * Higher-Order
 ;;;
 ;;; - Choreographies as values
 ;;; - Type inference
@@ -251,7 +252,7 @@
   @(simulate-chor compose-test 41)
   )
 
-;;; Tic-Tac-Toe
+;;; * Tic-Tac-Toe
 
 (def ttt-syms
   '[x o])
