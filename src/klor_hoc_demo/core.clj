@@ -74,9 +74,9 @@
   @(simulate-chor rpc 'my+ [1 2 3])
   )
 
-(comment
-  (def rpc-port 7889)
+(def rpc-port 7889)
 
+(comment
   (def rpc-server
     (future
       (with-server [ssc {:port rpc-port}]
@@ -140,12 +140,12 @@
     (S->C (S (random-uuid)))
     (C :error)))
 
-(comment
-  (def get-token-ports
-    {:C->S 7890
-     :A->S 7891
-     :C->A 7892})
+(def get-token-ports
+  {:C->S 7890
+   :A->S 7891
+   :C->A 7892})
 
+(comment
   (def get-token-server
     (future
       (with-server [ssc1 {:port (get-token-ports :A->S)}
@@ -207,9 +207,9 @@
   @(simulate-chor secure 42)
   )
 
-(comment
-  (def secure-port 7893)
+(def secure-port 7893)
 
+(comment
   (def secure-server
     (future
       (with-server [ssc {:port secure-port}]
@@ -324,9 +324,9 @@
 (defchor ttt-start [A B] (-> #{A B}) []
   (ttt-play [A B] (ttt-board) 0))
 
-(comment
-  (def ttt-port 7894)
+(def ttt-port 7894)
 
+(comment
   (def ttt-server
     (future
       (with-server [ssc {:port ttt-port}]
