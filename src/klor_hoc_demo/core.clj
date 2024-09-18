@@ -97,7 +97,6 @@
 ;;;
 ;;; - Agreement types
 ;;; - Conditionals and knowledge of choice
-;;; - Modularity, live redefinition
 
 (defchor simple-copy [A B] (-> A #{A B}) [x]
   (A=>B x))
@@ -123,6 +122,8 @@
              (remote-map [A B] f (next xs))))))
 
 ;;; * Authentication
+;;;
+;;; - Live redefinition
 
 (defn ask [prompt]
   (print prompt)
