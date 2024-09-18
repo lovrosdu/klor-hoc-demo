@@ -17,7 +17,7 @@
 ;;; - Typed DSL
 ;;; - Location polymorphism
 ;;; - Role expressions
-;;; - Projection
+;;; - Projection via macroexpansion
 ;;; - Concurrent execution
 ;;; - Simulator
 
@@ -33,7 +33,6 @@
 ;;; * Communicating
 ;;;
 ;;; - Communication basics
-;;; - Projection via macroexpansion
 ;;; - Calling Clojure
 
 (defchor simple-move [A B] (-> A B) [x]
