@@ -232,7 +232,7 @@
 ;;;
 ;;; - Choreographies as values
 ;;; - Type inference
-;;; - Avoid auxiliary roles, defer to the tutorial/reference
+;;; - Auxiliary roles
 
 (defchor compose [A B C] (-> (-> B C) (-> A B) (-> A C | B)) [g f]
   (chor (-> A C) [x] (g (f x))))
